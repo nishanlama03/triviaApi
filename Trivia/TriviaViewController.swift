@@ -7,6 +7,7 @@
 
 import UIKit
 
+
 class TriviaViewController: UIViewController {
   
   @IBOutlet weak var currentQuestionNumberLabel: UILabel!
@@ -26,32 +27,46 @@ class TriviaViewController: UIViewController {
     super.viewDidLoad()
     addGradient()
     questionContainerView.layer.cornerRadius = 8.0
-    // TODO: FETCH TRIVIA QUESTIONS HERE
+      TriviaQuestionService.fetchQuestions { [weak self] fetchedQuestions in
+          DispatchQueue.main.async {
+              guard let self = self else { return }
+              if let fetchedQuestions = fetchedQuestions {
+                  self.questions = fetchedQuestions
+                  self.currQuestionIndex = 0
+                  self.numCorrectQuestions = 0
+                  self.updateQuestion(withQuestionIndex: self.currQuestionIndex)
+              } else {
+                  self.questionLabel.text = "Failed to load questions."
+              }
+          }
+      }
+    
   }
   
-  private func updateQuestion(withQuestionIndex questionIndex: Int) {
-    currentQuestionNumberLabel.text = "Question: \(questionIndex + 1)/\(questions.count)"
-    let question = questions[questionIndex]
-    questionLabel.text = question.question
-    categoryLabel.text = question.category
-    let answers = ([question.correctAnswer] + question.incorrectAnswers).shuffled()
-    if answers.count > 0 {
-      answerButton0.setTitle(answers[0], for: .normal)
+    private func updateQuestion(withQuestionIndex questionIndex: Int) {
+        currentQuestionNumberLabel.text = "Question: \(questionIndex + 1)/\(questions.count)"
+        let question = questions[questionIndex]
+        questionLabel.text = question.question.htmlDecoded
+        categoryLabel.text = question.category.htmlDecoded
+        
+        let answers = ([question.correctAnswer] + question.incorrectAnswers).shuffled()
+        if answers.count > 0 {
+            answerButton0.setTitle(answers[0].htmlDecoded, for: .normal)
+        }
+        if answers.count > 1 {
+            answerButton1.setTitle(answers[1].htmlDecoded, for: .normal)
+            answerButton1.isHidden = false
+        }
+        if answers.count > 2 {
+            answerButton2.setTitle(answers[2].htmlDecoded, for: .normal)
+            answerButton2.isHidden = false
+        }
+        if answers.count > 3 {
+            answerButton3.setTitle(answers[3].htmlDecoded, for: .normal)
+            answerButton3.isHidden = false
+        }
     }
-    if answers.count > 1 {
-      answerButton1.setTitle(answers[1], for: .normal)
-      answerButton1.isHidden = false
-    }
-    if answers.count > 2 {
-      answerButton2.setTitle(answers[2], for: .normal)
-      answerButton2.isHidden = false
-    }
-    if answers.count > 3 {
-      answerButton3.setTitle(answers[3], for: .normal)
-      answerButton3.isHidden = false
-    }
-  }
-  
+
   private func updateToNextQuestion(answer: String) {
     if isCorrectAnswer(answer) {
       numCorrectQuestions += 1
